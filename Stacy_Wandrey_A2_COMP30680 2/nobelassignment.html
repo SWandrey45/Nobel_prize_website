@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <!-- CSS styling inspired by practical 6, week 5 readcolordata_styled.html-->
+    <style>
+        h1 {
+            text-align: center;
+            text-decoration: underline;
+            text-decoration-style: none;
+            text-decoration-color: #00ace6;
+            font-family: georgia;
+        }
+
+        #header {
+            border: 1px solid black;
+            background-image: linear-gradient(to bottom right, #ffdd99, #e6ac00);
+            text-align: center;
+        }
+
+        h2,
+        h3 {
+            font-family: georgia;
+            text-decoration: underline;
+            text-decoration-color: #00ace6;
+        }
+
+        #more_info {
+            font-family: georgia;
+        }
+
+        select,
+        form,
+            {
+            font-family: georgia;
+
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid darkgray;
+            border-collapse: collapse;
+            padding: 5px;
+            font-family: georgia;
+        }
+
+        th {
+            background-color: #00ace6;
+            color: white;
+            font-family: georgia;
+        }
+
+        table tr:nth-child(odd) {
+            background-color: white;
+        }
+
+        table tr:nth-child(even) {
+            background-color: whitesmoke;
+        }
+
+    </style>
+</head>
+
+<body>
+    <h1>*Nobel Laureates*</h1>
+    <div id=header>
+        <!--        Nobel image below taken from google -->
+        <img src="nobel_image.jpg">
+        <!-- code for drop down menus was inspired from https://www.w3schools.com/howto/howto_js_dropdown.asp -->
+        <h2>Select which years to display:</h2>
+        Category:<select id="category"></select>
+        Year Start:<select id="year"></select>
+        Year End:<select id="yearTwo"></select>
+
+        <input type="submit" onclick="submit_year()">
+        <h3>Select to view female, male or all Nobel Prize recipients.</h3>
+        <form>
+            <!-- code for the following radio buttons was inspired by https://www.w3schools.com/tags/att_input_type_radio.asp -->
+            <input type="radio" name="gender" value="male" id="gender_radio_m" onclick="showMale()"> Male<br>
+            <input type="radio" name="gender" value="female" id="gender_radio_f" onclick="showFemale()"> Female<br>
+            <input type="radio" name="gender" value="all" id="gender_radio_a" onclick="submit_year()"> All<br><br>
+        </form>
+    </div>
+    <div id="info"></div>
+    <div id="demo1"></div>
+    <script>
+        //the following code for reading from the prizesByYear.json file and winnersByID.json and was inspired by code from practical 6, week 5 readcolordata_styled.html
+        var parsedObj2 = "";
+        var xmlhttp = new XMLHttpRequest();
+        var url = "prizesByYear.json";
+
+
+        //global variables for lists of male and female laureates
+        var M = [];
+        var F = [];
+
+
+
+        xmlhttp.onreadystatechange = function() {
+            if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                var parsedObj = JSON.parse(xmlhttp.responseText);
+                displayJSON(parsedObj);
+            }
+        }
+
+        xmlhttp.open("GET", url, true);
+        xmlhttp.send();
+        //this information reads from the winnersByID.json file
+        var xmlhttp2 = new XMLHttpRequest();
+        var url2 = "winnersByID.json";
+
+
+        xmlhttp2.onreadystatechange = function() {
+            if (xmlhttp2.readyState == 4 && xmlhttp2.status == 200) {
+                parsedObj2 = JSON.parse(xmlhttp2.responseText);
+                displayJSON2(parsedObj2);
+                gender_id(parsedObj2);
+
+
+            }
+        }
+        xmlhttp2.open("GET", url2, true);
+        xmlhttp2.send();
+
+
+        function displayJSON2(obj) {
+            window.dataset2 = obj.laureates;
+        }
+
+        function displayJSON(obj) {
+            window.dataset = obj.prizes;
+
+            categories();
+
+        }
+        //the following function was inspired by code from practical 6, week 5 readcolordata_styled.html to build and display a table from parsing json files. 
+        function new_nobels(year1, year2, category, gender) {
+            var prizeInfo = "<table>";
+            prizeInfo += "<tr><th>Year</th><th>Category</th><th>Firstname</th><th>Lastname</th><th>Motivation</th><th>More Info</th></tr>";
+            var prizes = window.dataset;
+            var laureates = window.dataset2;
+            for (var i = 1; i < prizes.length; i++) {
+                var year = prizes[i].year;
+                if (year >= year1 && year <= year2) {
+                    var cat = prizes[i].category;
+                    var cat1 = document.getElementById("category");
+                    var selected_cat = cat1.options[cat1.selectedIndex].text;
+
+                    if (selected_cat != "None") {
+                        if (cat != selected_cat) {
+                            continue;
+                        }
+
+                    }
+
+                    var overallMotivation = prizes[i].overallMotivation;
+                    var laureates = prizes[i].laureates;
+                    for (j = 0; j < laureates.length; j++) {
+
+                        var id = prizes[i].laureates[j].id;
+                        var firstname = prizes[i].laureates[j].firstname;
+                        var surname = prizes[i].laureates[j].surname;
+                        var motivation = prizes[i].laureates[j].motivation;
+                        if (motivation == undefined) {
+                            motivation = "Not available"
+                        }
+                        var share = prizes[i].laureates[j].share;
+
+
+                        prizeInfo += "<tr><td>" + year + "</td><td>" + cat + "</td><td>" + firstname + "</td><td>" + surname + "</td><td>" +
+                            motivation + "</td><td>" + '<input value="More Info" class="more_info" type="button" id="info" onclick="more_info_table(' + prizes[i].laureates[j].id + ')"' + "</td></tr>";
+                    }
+                }
+
+            }
+            prizeInfo += "</table>";
+            document.getElementById("demo1").innerHTML = prizeInfo;
+
+        }
+        //the following function was inspired by code from practical 6, week 5 readcolordata_styled.html to build and display a table from parsing json files. 
+        function more_info_table(id) {
+            var winnerInfo = "<table>"
+            winnerInfo += "<tr><th>Year of Birth</th><th>Year of Death</th><th>City of Birth</th><th>Award Category</th><th>Motivation</th><th> Name of affiliations</th><th>City of Affiliations</th><th>Country of Affiliations</th></tr>"
+
+            var laureates = window.dataset2;
+            for (l in laureates) {
+                if (laureates[l].id == id) {
+                    var born = laureates[l].born;
+                    var died = laureates[l].died;
+                    var bornCity = laureates[l].bornCity;
+                    var prizes = laureates[l].prizes;
+                    for (p = 0; p < prizes.length; p++) {
+                        var award = laureates[l].prizes[p].category;
+                        var motivationInfo = laureates[l].prizes[p].motivation;
+                        if (motivationInfo == "undefined") {
+                            motivationInfo == "Not available"
+                        }
+                        var affiliations = laureates[l].prizes[p].affiliations;
+
+                        for (a = 0; a < affiliations.length; a++) {
+                            var name = affiliations[a].name;
+                            var city = affiliations[a].city;
+                            if (city == "undefined") {
+                                city == "Not available"
+                            }
+                            var country = affiliations[a].country;
+                            if (country == "undefined") {
+                                city == "unavailable"
+                            }
+
+                            winnerInfo += "<tr><td>" + born + "</td><td>" + died + "</td><td>" + bornCity + "</td><td>" + award + "</td><td>" +
+                                motivationInfo + "</td><td>" + name + "</td><td>" + city + "</td><td>" + country + "</td></tr>"
+
+                            winnerInfo += "</table>";
+                        }
+                        document.getElementById("info").innerHTML = winnerInfo;
+                    }
+                }
+            }
+        }
+
+        //The following function uses code from https://www.w3schools.com/jsref/prop_select_selectedindex.asp to select years from a dropdown list. 
+        function year_id(id) {
+            var years = document.getElementById(id);
+            var value = years[years.selectedIndex].value;
+            return value;
+        }
+        //This function filters values to display on the table based on year and category 
+        function submit_year() {
+            var year1 = year_id("year");
+            var year2 = year_id("yearTwo");
+            var category = year_id("category");
+
+            new_nobels(year1, year2, category);
+        }
+        //This function finds the id for female and male laureates and puts them into the global variable lists M and F. It uses the push method from https://www.w3schools.com/jsref/jsref_push.asp
+        function gender_id(obj) {
+            var getgenderID = obj.laureates;
+
+            for (i = 0; i < getgenderID.length; i++) {
+                if (getgenderID[i].gender == 'female') {
+                    F.push(getgenderID[i].id);
+                } else {
+                    M.push(getgenderID[i].id);
+                }
+            }
+
+        }
+
+        //this function populates the drop down menu with years relevant to the nobel prize winners. Inspiration for code came from  https://stackoverflow.com/questions/32925880/using-javascript-to-loop-through-drop-down-html-array
+        function list1() {
+            text = "";
+            var i;
+            for (i = 1970; i < 2019; i++) {
+                text += "<option>" + i + "</option>";
+            }
+            document.getElementById("year").innerHTML = text;
+            document.getElementById("yearTwo").innerHTML = text;
+        }
+        //this function loops through the available categories and uses them to populate a dropdown list. inspiration for this code also came from: https://stackoverflow.com/questions/32925880/using-javascript-to-loop-through-drop-down-html-array, and also the push method https://www.w3schools.com/jsref/jsref_push.asp
+        function categories() {
+            list = ["None"];
+            text = "";
+            var i;
+            var prizes = window.dataset;
+            for (i = 1; i < prizes.length; i++) {
+                if (list.includes(prizes[i].category)) {} else {
+                    list.push(prizes[i].category);
+                }
+            }
+            var x;
+            for (x = 0; x < 6; x++) {
+                text += "<option>" + list[x] + "</option>";
+            }
+
+            document.getElementById("category").innerHTML = text;
+        }
+
+        list1();
+
+
+        //the following function identifies the laureates with the gender Female and creates a table for those laureates only. 
+        function showFemale() {
+
+            var year1 = year_id("year");
+            var year2 = year_id("yearTwo");
+            var category = year_id("category");
+
+
+            var prizeInfo = "<table>";
+            prizeInfo += "<tr><th>Year</th><th>Category</th><th>Firstname</th><th>Lastname</th><th>Motivation</th><th>More Info</th></tr>";
+            var prizes = window.dataset;
+            var laureates = window.dataset2;
+            for (var i = 1; i < prizes.length; i++) {
+                var year = prizes[i].year;
+                if (year >= year1 && year <= year2) {
+                    var cat = prizes[i].category;
+                    var cat1 = document.getElementById("category");
+                    var selected_cat = cat1.options[cat1.selectedIndex].text;
+
+                    if (selected_cat != "None") {
+                        if (cat != selected_cat) {
+                            continue;
+                        }
+
+                    }
+
+                    var overallMotivation = prizes[i].overallMotivation;
+                    var laureates = prizes[i].laureates;
+
+                    FemaleTableText = "";
+                    for (j = 0; j < laureates.length; j++) {
+
+                        var id = prizes[i].laureates[j].id;
+                        var firstname = prizes[i].laureates[j].firstname;
+                        var surname = prizes[i].laureates[j].surname;
+                        var motivation = prizes[i].laureates[j].motivation;
+                        if (motivation == undefined) {
+                            motivation = "Not available"
+                        }
+                        var share = prizes[i].laureates[j].share;
+
+                        if (F.includes(id)) {
+                            console.log(id);
+                            //console.log(JSON.stringify(F) + "\n\n\n" + JSON.stringify(M));
+                            FemaleTableText += "<tr><td>" + year + "</td><td>" + cat + "</td><td>" + firstname + "</td><td>" + surname + "</td><td>" +
+                                motivation + "</td><td>" + '<input value="More Info" class="more_info" type="button" id="info" onclick="more_info_table(' + prizes[i].laureates[j].id + ')"' + "</td></tr>";
+                        }
+                    }
+
+                    if (FemaleTableText != "") {
+
+                        prizeInfo += FemaleTableText;
+
+
+                    }
+
+                }
+
+            }
+            prizeInfo += "</table>";
+
+
+            document.getElementById("demo1").innerHTML = prizeInfo;
+
+
+        }
+        //the following function identifies the laureates with the gender male and creates a table for those laureates only.
+        function showMale() {
+
+            var year1 = year_id("year");
+            var year2 = year_id("yearTwo");
+            var category = year_id("category");
+
+
+            var prizeInfo = "<table>";
+            prizeInfo += "<tr><th>Year</th><th>Category</th><th>Firstname</th><th>Lastname</th><th>Motivation</th><th>More Info</th></tr>";
+            var prizes = window.dataset;
+            var laureates = window.dataset2;
+            for (var i = 1; i < prizes.length; i++) {
+                var year = prizes[i].year;
+                if (year >= year1 && year <= year2) {
+                    var cat = prizes[i].category;
+                    var cat1 = document.getElementById("category");
+                    var selected_cat = cat1.options[cat1.selectedIndex].text;
+
+                    if (selected_cat != "None") {
+                        if (cat != selected_cat) {
+                            continue;
+                        }
+
+                    }
+
+                    var overallMotivation = prizes[i].overallMotivation;
+                    var laureates = prizes[i].laureates;
+                    MaleTableText = "";
+                    for (j = 0; j < laureates.length; j++) {
+
+                        var id = prizes[i].laureates[j].id;
+                        var firstname = prizes[i].laureates[j].firstname;
+                        var surname = prizes[i].laureates[j].surname;
+                        var motivation = prizes[i].laureates[j].motivation;
+                        if (motivation == undefined) {
+                            motivation = "Not available"
+                        }
+                        var share = prizes[i].laureates[j].share;
+
+                        if (M.includes(id)) {
+                            MaleTableText += "<tr><td>" + year + "</td><td>" + cat + "</td><td>" + firstname + "</td><td>" + surname + "</td><td>" +
+                                motivation + "</td><td>" + '<input value="More Info" class="more_info" type="button" id="info" onclick="more_info_table(' + prizes[i].laureates[j].id + ')"' + "</td></tr>";
+                        }
+                    }
+                    if (MaleTableText != "") {
+
+                        prizeInfo += MaleTableText;
+
+                    }
+
+                }
+            }
+            prizeInfo += "</table>";
+
+            document.getElementById("demo1").innerHTML = prizeInfo;
+
+
+        }
+
+    </script>
+</body>
+
+</html>
